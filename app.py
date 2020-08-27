@@ -68,10 +68,6 @@ APP_ID = SETTINGS.app_id if SETTINGS.app_id else uuid.uuid4()
 # Create the Bot
 BOT = TeamsStartThreadInChannel(CONFIG.APP_ID)
 
-bucket = {}
-activities = []
-service_urls = []
-
 
 # Listen for incoming requests on /api/messages.
 async def messages(req: Request) -> Response:
@@ -82,10 +78,6 @@ async def messages(req: Request) -> Response:
         return Response(status=HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
 
     activity = Activity().deserialize(body)
-    activities.append(activity)
-    print(activity.service_url)
-    bucket['service_url'] = activity.service_url
-    bucket['team_id'] = activity.channel_data['teamsTeamId']
     auth_header = req.headers["Authorization"] if "Authorization" in req.headers else ""
 
     conversation_reference = TurnContext.get_conversation_reference(activity)

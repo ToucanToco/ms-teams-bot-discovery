@@ -1,11 +1,8 @@
-from botbuilder.core import CardFactory, TurnContext, MessageFactory, BotFrameworkAdapter
-from botbuilder.core.teams import TeamsActivityHandler, TeamsInfo, teams_get_channel_id
+from botbuilder.core import TurnContext
+from botbuilder.core.teams import TeamsActivityHandler
+from botbuilder.schema import ChannelAccount
 from botbuilder.schema.teams import TeamInfo, TeamsChannelAccount
-from botframework.connector.auth import List, MicrosoftAppCredentials
-from botbuilder.schema import CardAction, ChannelAccount, HeroCard, Mention, ConversationParameters
-from botbuilder.schema._connector_client_enums import ActionTypes
-
-from conversation_references import CONVERSATION_REFERENCES
+from botframework.connector.auth import List
 
 
 class TeamsStartThreadInChannel(TeamsActivityHandler):

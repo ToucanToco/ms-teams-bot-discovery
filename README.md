@@ -1,8 +1,15 @@
-# echo_bot
+# MS Teams - Toucan Toco bot discovery
 
-Demonstrate the core capabilities of the Microsoft Bot Framework
+This is the code produced within the discovery of MS teams.
+The route `POST /api/messages` is a "standard" MS Teams bot route.
+The route `POST /api/messages/send` allows to send a message to all channels the bot has access to.
 
-This bot has been created using [Bot Framework](https://dev.botframework.com), it shows how to create a simple bot that accepts input from the user and echoes it back.
+You can check the [related document](https://toucantoco.atlassian.net/wiki/spaces/TTA/pages/1508573545/Notes+Discovery+sur+int+gration+Toucan+dans+MS+Teams).
+
+Below is auto-generated documentation
+
+----
+
 
 ## Prerequisites
 
