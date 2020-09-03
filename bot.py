@@ -9,6 +9,10 @@ class TeamsStartThreadInChannel(TeamsActivityHandler):
     def __init__(self, app_id: str):
         self._app_id = app_id
 
+    async def on_conversation_update_activity(self, turn_context: TurnContext):
+        print('on_conversation_update_activity')
+        return await super().on_conversation_update_activity(turn_context)
+
     async def on_teams_members_added(  # pylint: disable=unused-argument
         self,
         teams_members_added: [TeamsChannelAccount],

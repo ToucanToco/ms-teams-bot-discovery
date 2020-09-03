@@ -3,6 +3,7 @@
 This is the code produced within the discovery of MS teams.
 The route `POST /api/messages` is a "standard" MS Teams bot route.
 The route `POST /api/messages/send` allows to send a message to all channels the bot has access to.
+The route `POST /api/messages/send-execsum` allows to send a link to the execsum to all channels the bot has access to.
 
 You can check the [related document](https://toucantoco.atlassian.net/wiki/spaces/TTA/pages/1508573545/Notes+Discovery+sur+int+gration+Toucan+dans+MS+Teams).
 

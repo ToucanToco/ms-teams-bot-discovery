@@ -1,16 +1,12 @@
+from datetime import datetime
+from http import HTTPStatus
 import sys
 import traceback
 import uuid
-from datetime import datetime
-from http import HTTPStatus
 
 from aiohttp import web
 from aiohttp.web import Request, Response, json_response
-from botbuilder.core import (
-    BotFrameworkAdapterSettings,
-    MessageFactory, TurnContext,
-    BotFrameworkAdapter,
-)
+from botbuilder.core import (BotFrameworkAdapter, BotFrameworkAdapterSettings, CardFactory, MessageFactory, TurnContext)
 from botbuilder.core.integration import aiohttp_error_middleware
 from botbuilder.schema import Activity, ActivityTypes, ConversationParameters
 from botframework.connector import ConnectorClient
@@ -18,9 +14,7 @@ from botframework.connector.auth import MicrosoftAppCredentials
 from botframework.connector.teams import TeamsConnectorClient
 
 from bot import TeamsStartThreadInChannel
-
 from config import DefaultConfig
-from conversation_references import CONVERSATION_REFERENCES
 
 CONFIG = DefaultConfig()
 
@@ -80,9 +74,6 @@ async def messages(req: Request) -> Response:
     activity = Activity().deserialize(body)
     auth_header = req.headers["Authorization"] if "Authorization" in req.headers else ""
 
-    conversation_reference = TurnContext.get_conversation_reference(activity)
-    CONVERSATION_REFERENCES.append(conversation_reference)
-
     response = await ADAPTER.process_activity(activity, auth_header, BOT.on_turn)
     if response:
         return json_response(data=response.body, status=response.status)
@@ -99,7 +90,43 @@ async def send_message(req: Request) -> Response:
             conversation_parameters = ConversationParameters(
                 is_group=True,
                 channel_data={"channel": {"id": teams_channel.id}},
-                activity=MessageFactory.text('Hello'),
+                activity=MessageFactory.content_url('https://picsum.photos/200/300', 'image/png'),
+            )
+            client.conversations.create_conversation(conversation_parameters)
+        return Response(status=HTTPStatus.OK)
+    except Exception:
+        traceback.print_exc()
+
+
+async def send_execsum(req: Request) -> Response:
+    try:
+        credentials = MicrosoftAppCredentials(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
+        client = ConnectorClient(credentials, 'https://smba.trafficmanager.net/fr/')
+        teams_client = TeamsConnectorClient(credentials, 'https://smba.trafficmanager.net/fr/')
+        teams_channels = teams_client.teams.get_teams_channels('19:96de6561548648858071872e920a028e@thread.tacv2')
+        for teams_channel in teams_channels.conversations:
+            conversation_parameters = ConversationParameters(
+                is_group=True,
+                channel_data={"channel": {"id": teams_channel.id}},
+                activity=MessageFactory.attachment(
+                    CardFactory.adaptive_card({
+                        "type": "AdaptiveCard",
+                        "version": "1.0",
+                        "body": [
+                            {
+                                "type": "TextBlock",
+                                "text": "william.gorge@toucantoco.com sent an execsum",
+                            },
+                        ],
+                        "actions": [
+                            {
+                                "type": "Action.OpenUrl",
+                                "title": "View execsum",
+                                "url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+                            }
+                        ]
+                    })
+                ),
             )
             client.conversations.create_conversation(conversation_parameters)
         return Response(status=HTTPStatus.OK)
@@ -108,10 +135,23 @@ async def send_message(req: Request) -> Response:
 
 APP = web.Application(middlewares=[aiohttp_error_middleware])
 APP.router.add_post("/api/messages", messages)
+
 APP.router.add_post("/api/messages/send", send_message)
+APP.router.add_post("/api/messages/send-execsum", send_message)
 
 if __name__ == "__main__":
     try:
         web.run_app(APP, host="localhost", port=CONFIG.PORT)
     except Exception as error:
         raise error
+
+# TODO check how to get the serviceURL: we get it when the bot is added. Anyway it does not seem to change https://docs.microsoft.com/fr-fr/microsoftteams/platform/resources/bot-v3/bots-context (source: "The value of serviceUrl tends to be stable but can change. When a new message arrives, your bot should verify its stored value of serviceUrl.")
+
+# Problème conversations
+# TODO si envoi seulement de laputa vers ms teams => bcp moins complexe (pas besoin de gêrer des messages)
+# TODO ok d'envoyer un lien vers l'execsum? compliqué d'uploader un fichier PDF vers teams, besoin de gêrer une conversation
+# TODO si on veut avoir synchro commentaires stories dans MS Teams; là c'est obligé d'avoir un service de bot
+
+# Problème one bot to rule them all (dans le cas où on a besoin d'un bot)
+# TODO check with margot if we can have the client create and install an app manually
+# TODO cout d'un service de base
