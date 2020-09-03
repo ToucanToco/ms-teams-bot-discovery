@@ -86,13 +86,13 @@ async def send_message(req: Request) -> Response:
         client = ConnectorClient(credentials, 'https://smba.trafficmanager.net/fr/')
         teams_client = TeamsConnectorClient(credentials, 'https://smba.trafficmanager.net/fr/')
         teams_channels = teams_client.teams.get_teams_channels('19:96de6561548648858071872e920a028e@thread.tacv2')
-        for teams_channel in teams_channels.conversations:
-            conversation_parameters = ConversationParameters(
-                is_group=True,
-                channel_data={"channel": {"id": teams_channel.id}},
-                activity=MessageFactory.content_url('https://picsum.photos/200/300', 'image/png'),
-            )
-            client.conversations.create_conversation(conversation_parameters)
+        general_channel = next(channel for channel in teams_channels.conversations if channel.name is None)
+        conversation_parameters = ConversationParameters(
+            is_group=True,
+            channel_data={"channel": {"id": general_channel.id}},
+            activity=MessageFactory.content_url('https://picsum.photos/200/300', 'image/png'),
+        )
+        client.conversations.create_conversation(conversation_parameters)
         return Response(status=HTTPStatus.OK)
     except Exception:
         traceback.print_exc()
@@ -104,31 +104,31 @@ async def send_execsum(req: Request) -> Response:
         client = ConnectorClient(credentials, 'https://smba.trafficmanager.net/fr/')
         teams_client = TeamsConnectorClient(credentials, 'https://smba.trafficmanager.net/fr/')
         teams_channels = teams_client.teams.get_teams_channels('19:96de6561548648858071872e920a028e@thread.tacv2')
-        for teams_channel in teams_channels.conversations:
-            conversation_parameters = ConversationParameters(
-                is_group=True,
-                channel_data={"channel": {"id": teams_channel.id}},
-                activity=MessageFactory.attachment(
-                    CardFactory.adaptive_card({
-                        "type": "AdaptiveCard",
-                        "version": "1.0",
-                        "body": [
-                            {
-                                "type": "TextBlock",
-                                "text": "william.gorge@toucantoco.com sent an execsum",
-                            },
-                        ],
-                        "actions": [
-                            {
-                                "type": "Action.OpenUrl",
-                                "title": "View execsum",
-                                "url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
-                            }
-                        ]
-                    })
-                ),
-            )
-            client.conversations.create_conversation(conversation_parameters)
+        general_channel = next(channel for channel in teams_channels.conversations if channel.name is None)
+        conversation_parameters = ConversationParameters(
+            is_group=True,
+            channel_data={"channel": {"id": general_channel.id}},
+            activity=MessageFactory.attachment(
+                CardFactory.adaptive_card({
+                    "type": "AdaptiveCard",
+                    "version": "1.0",
+                    "body": [
+                        {
+                            "type": "TextBlock",
+                            "text": "william.gorge@toucantoco.com sent an execsum",
+                        },
+                    ],
+                    "actions": [
+                        {
+                            "type": "Action.OpenUrl",
+                            "title": "View execsum",
+                            "url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+                        }
+                    ]
+                })
+            ),
+        )
+        client.conversations.create_conversation(conversation_parameters)
         return Response(status=HTTPStatus.OK)
     except Exception:
         traceback.print_exc()
@@ -137,7 +137,7 @@ APP = web.Application(middlewares=[aiohttp_error_middleware])
 APP.router.add_post("/api/messages", messages)
 
 APP.router.add_post("/api/messages/send", send_message)
-APP.router.add_post("/api/messages/send-execsum", send_message)
+APP.router.add_post("/api/messages/send-execsum", send_execsum)
 
 if __name__ == "__main__":
     try:
@@ -145,11 +145,9 @@ if __name__ == "__main__":
     except Exception as error:
         raise error
 
-# TODO check how to get the serviceURL: we get it when the bot is added. Anyway it does not seem to change https://docs.microsoft.com/fr-fr/microsoftteams/platform/resources/bot-v3/bots-context (source: "The value of serviceUrl tends to be stable but can change. When a new message arrives, your bot should verify its stored value of serviceUrl.")
 
 # Problème conversations
 # TODO si envoi seulement de laputa vers ms teams => bcp moins complexe (pas besoin de gêrer des messages)
-# TODO ok d'envoyer un lien vers l'execsum? compliqué d'uploader un fichier PDF vers teams, besoin de gêrer une conversation
 # TODO si on veut avoir synchro commentaires stories dans MS Teams; là c'est obligé d'avoir un service de bot
 
 # Problème one bot to rule them all (dans le cas où on a besoin d'un bot)
